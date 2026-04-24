@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>双色球号码实验室与点数挑战</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero card">
+        <p class="eyebrow">非官方规则演示</p>
+        <h1>双色球号码实验室与点数挑战</h1>
+        <p class="hero-copy">
+          用历史数据、号码覆盖实验和虚拟点数挑战来观察组合规模、抽样上限与规则映射。页面只做本地概率演示，不连接任何真实购买、支付或兑换流程。
+        </p>
+      </header>
+
+      <section class="mode-shell" aria-label="功能模式">
+        <div class="mode-tabs" role="tablist" aria-label="功能切换">
+          <button
+            id="tab-match-lab"
+            class="mode-tab is-active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            data-mode-tab="match-lab"
+          >
+            号码实验室
+          </button>
+          <button
+            id="tab-points-challenge"
+            class="mode-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-mode-tab="points-challenge"
+          >
+            点数挑战
+          </button>
+        </div>
+
+        <section
+          id="panel-match-lab"
+          class="mode-panel"
+          role="tabpanel"
+          aria-labelledby="tab-match-lab"
+          data-mode-panel="match-lab"
+        >
+          <section class="card">
+            <h2>历史开奖数据</h2>
+            <div class="filter-grid">
+              <label>
+                期号关键词
+                <input id="issueKeyword" type="text" placeholder="例如：2024" />
+              </label>
+              <label>
+                年份
+                <input id="yearFilter" type="number" min="2003" max="2099" placeholder="例如：2025" />
+              </label>
+              <label>
+                开始日期
+                <input id="startDate" type="date" />
+              </label>
+              <label>
+                结束日期
+                <input id="endDate" type="date" />
+              </label>
+            </div>
+            <div class="btn-row">
+              <button id="applyFilters" type="button">筛选</button>
+              <button id="clearFilters" type="button" class="ghost">清空筛选</button>
+            </div>
+            <p id="loadError" class="error" aria-live="polite"></p>
+            <p id="drawsCount" class="subtle">共 0 条</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>期号</th>
+                    <th>开奖日期</th>
+                    <th>红球</th>
+                    <th>蓝球</th>
+                  </tr>
+                </thead>
+                <tbody id="drawsBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>7+2 生成</h2>
+            <div class="input-grid">
+              <label>
+                候选红球（1-33，至少 7 个）
+                <input id="redCandidates" type="text" placeholder="例如：1,3,5,7,9,11,13,15" />
+              </label>
+              <label>
+                候选蓝球（1-16，至少 2 个）
+                <input id="blueCandidates" type="text" placeholder="例如：2,6,8" />
+              </label>
+            </div>
+            <div class="btn-row">
+              <button id="generate" type="button">生成一组 7+2</button>
+              <button id="reset" type="button" class="ghost">重置</button>
+            </div>
+            <p id="inputError" class="error" aria-live="polite"></p>
+            <div id="result" class="result-box">尚未生成号码</div>
+          </section>
+
+          <section class="card">
+            <h2>号码实验室</h2>
+            <p class="hero-copy">
+              系统会生成一组隐藏目标号码。你提供复式候选号池后，页面会按整组候选号评估最佳命中情况和覆盖范围。
+            </p>
+            <p class="subtle">
+              这里只展示命中数、覆盖率和中性层级，不展示任何真实购买、支付或兑奖语义。
+            </p>
+            <p id="matchLabStatusMessage" class="subtle">请先加载历史开奖数据后再开始实验。</p>
+          </section>
+
+          <section class="card">
+            <div class="match-layout">
+              <div class="match-inputs">
+                <div class="input-grid">
+                  <label>
+                    候选红球（1-33，至少 7 个）
+                    <input id="matchRedCandidates" type="text" placeholder="例如：1,3,5,7,9,11,13,15" />
+                  </label>
+                  <label>
+                    候选蓝球（1-16，至少 2 个）
+                    <input id="matchBlueCandidates" type="text" placeholder="例如：2,6,8" />
+                  </label>
+                </div>
+
+                <p id="matchLabSelectionSummary" class="subtle">已选红球 0 个，已选蓝球 0 个</p>
+
+                <div class="match-option-card">
+                  <label>
+                    目标种子
+                    <input id="matchLabSeedInput" type="text" placeholder="输入固定种子，例如：ssq-demo-001" />
+                  </label>
+                  <div class="btn-row">
+                    <button id="generateMatchLabSeed" type="button" class="ghost">生成种子</button>
+                    <button id="applyMatchLabSeed" type="button" class="ghost">按种子生成目标</button>
+                  </div>
+                  <p class="subtle">
+                    相同历史数据配合同一目标种子，会生成同一组隐藏目标，方便重复验证。
+                  </p>
+                </div>
+
+                <div class="match-option-card">
+                  <label class="toggle-option">
+                    <input id="matchLabAutoReveal" type="checkbox" />
+                    <span>本局完成后自动揭晓隐藏目标</span>
+                  </label>
+                  <p class="subtle">
+                    默认关闭。关闭时页面先展示覆盖和最佳命中，需要时再手动揭晓目标号码。
+                  </p>
+                </div>
+
+                <div class="board-block">
+                  <div class="board-header">
+                    <h3>红球候选号池</h3>
+                    <span class="subtle">点击球号切换选中状态</span>
+                  </div>
+                  <div id="matchLabRedBoard" class="ball-board ball-board-red"></div>
+                </div>
+
+                <div class="board-block">
+                  <div class="board-header">
+                    <h3>蓝球候选号池</h3>
+                    <span class="subtle">输入框与球盘保持同步</span>
+                  </div>
+                  <div id="matchLabBlueBoard" class="ball-board ball-board-blue"></div>
+                </div>
+
+                <div class="btn-row">
+                  <button id="startMatchLab" type="button">开始本局实验</button>
+                  <button id="revealMatchLabTarget" type="button" class="ghost">揭晓当前目标</button>
+                  <button id="newTarget" type="button" class="ghost">随机新目标</button>
+                  <button id="clearMatchLab" type="button" class="ghost">清空实验</button>
+                </div>
+                <p id="matchLabError" class="error" aria-live="polite"></p>
+              </div>
+
+              <div class="summary-grid">
+                <article class="metric-card">
+                  <p id="matchLabTargetStatus" class="metric-label">隐藏目标：未生成</p>
+                  <div id="matchLabTargetNumbers" class="metric-value">请先加载历史开奖数据后再开始实验。</div>
+                </article>
+
+                <article class="metric-card">
+                  <p class="metric-label">当前目标种子</p>
+                  <div id="matchLabCurrentSeed" class="metric-value metric-value-seed">尚未生成</div>
+                </article>
+
+                <article class="metric-card">
+                  <p class="metric-label">当前候选号池</p>
+                  <div id="matchLabSubmitted" class="metric-value">尚未开始实验</div>
+                </article>
+
+                <article class="metric-card">
+                  <p class="metric-label">最佳命中</p>
+                  <div id="matchLabHits" class="metric-value">本局结束后将显示整组候选号的最佳命中情况</div>
+                </article>
+
+                <article class="metric-card">
+                  <p class="metric-label">候选号覆盖率</p>
+                  <div id="matchLabCoverage" class="metric-value">本局结束后将显示覆盖范围</div>
+                </article>
+
+                <article id="matchLabBandCard" class="metric-card metric-card-band" data-band="none">
+                  <p class="metric-label">命中层级</p>
+                  <div id="matchLabBand" class="metric-value">尚未开始</div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-head">
+              <h2>最近 50 局</h2>
+              <p class="subtle">刷新页面后仍会保留本机最近记录。</p>
+            </div>
+            <div id="matchLabHistory" class="round-history-list"></div>
+          </section>
+        </section>
+
+        <section
+          id="panel-points-challenge"
+          class="mode-panel"
+          role="tabpanel"
+          aria-labelledby="tab-points-challenge"
+          data-mode-panel="points-challenge"
+          hidden
+        >
+          <section class="card">
+            <h2>点数挑战</h2>
+            <p id="pointsChallengeDisclaimer" class="hero-copy"></p>
+            <p id="pointsChallengeStatusMessage" class="subtle">请先加载历史开奖数据后再运行虚拟点数挑战。</p>
+          </section>
+
+          <section class="card">
+            <div class="challenge-stage">
+              <div class="challenge-debug-shell">
+                <div class="section-head">
+                  <h2>参数与调试栏</h2>
+                  <p class="subtle">先在这里调整挑战参数，再到下方候选号池完成本轮实验。</p>
+                </div>
+
+                <div class="input-grid challenge-debug-grid">
+                  <label>
+                    初始点数
+                    <input
+                      id="pointsChallengeInitialPoints"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value="1000"
+                      data-explain-key="initialPoints"
+                    />
+                  </label>
+                  <label class="toggle-inline">
+                    <input
+                      id="pointsChallengeSamplingEnabled"
+                      type="checkbox"
+                      checked
+                      data-explain-key="samplingEnabled"
+                    />
+                    <span>开启上限抽样</span>
+                  </label>
+                  <label>
+                    抽样方式
+                    <select id="pointsChallengeReplacementMode" data-explain-key="replacementMode">
+                      <option value="withoutReplacement" selected>无放回</option>
+                      <option value="withReplacement">有放回</option>
+                    </select>
+                  </label>
+                  <label>
+                    抽样上限（注）
+                    <input
+                      id="pointsChallengeCapLimit"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value="5000"
+                      data-explain-key="capLimit"
+                    />
+                  </label>
+                  <label class="toggle-inline">
+                    <input
+                      id="pointsChallengeRefillEnabled"
+                      type="checkbox"
+                      data-explain-key="refillEnabled"
+                    />
+                    <span>开启虚拟回补</span>
+                  </label>
+                  <label>
+                    回补方式
+                    <select id="pointsChallengeRefillMode" data-explain-key="refillMode">
+                      <option value="resetToInitial" selected>重置到初始点数</option>
+                      <option value="addFixedAmount">增加固定点数</option>
+                    </select>
+                  </label>
+                  <label>
+                    固定回补点数
+                    <input
+                      id="pointsChallengeFixedRefillPoints"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value="1000"
+                      data-explain-key="fixedRefillPoints"
+                    />
+                  </label>
+                  <label>
+                    本局最多回补次数
+                    <input
+                      id="pointsChallengeMaxRefills"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value="3"
+                      data-explain-key="maxRefills"
+                    />
+                  </label>
+                  <label>
+                    特别规则
+                    <select id="pointsChallengeSpecialRuleMode" data-explain-key="specialRuleMode">
+                      <option value="auto" selected>自动</option>
+                      <option value="forceOn">开启</option>
+                      <option value="forceOff">关闭</option>
+                    </select>
+                  </label>
+                  <label>
+                    当期销售点数
+                    <input
+                      id="pointsChallengeCurrentSalesPoints"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value="350000000"
+                      data-explain-key="currentSalesPoints"
+                    />
+                  </label>
+                  <label>
+                    期初奖池点数
+                    <input
+                      id="pointsChallengeCarryPoolBeforePoints"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value="850000000"
+                      data-explain-key="carryPoolBeforePoints"
+                    />
+                  </label>
+                  <label>
+                    公开固定奖级派奖总点数
+                    <input
+                      id="pointsChallengePublicFixedPayoutTotalPoints"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value="110000000"
+                      data-explain-key="publicFixedPayoutTotalPoints"
+                    />
+                  </label>
+                  <label>
+                    公开一等奖中奖注数
+                    <input
+                      id="pointsChallengePublicTier1WinningLines"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value="2"
+                      data-explain-key="publicTier1WinningLines"
+                    />
+                  </label>
+                  <label>
+                    公开二等奖中奖注数
+                    <input
+                      id="pointsChallengePublicTier2WinningLines"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value="60"
+                      data-explain-key="publicTier2WinningLines"
+                    />
+                  </label>
+                </div>
+
+                <div class="challenge-debug-strip">
+                  <article class="debug-chip" data-explain-key="unitCost">
+                    <span>单注消耗</span>
+                    <strong id="pointsChallengeUnitCost">2 点</strong>
+                  </article>
+                  <article class="debug-chip" data-explain-key="selectionMode">
+                    <span>选号方式</span>
+                    <strong id="pointsChallengeSelectionModeBadge">复式</strong>
+                  </article>
+                  <article class="debug-chip" data-explain-key="samplingState">
+                    <span>抽样状态</span>
+                    <strong id="pointsChallengeSamplingBadge">未触发</strong>
+                  </article>
+                  <article class="debug-chip" data-explain-key="specialRuleState">
+                    <span>特别规则状态</span>
+                    <strong id="pointsChallengeSpecialRuleBadge">自动判断</strong>
+                  </article>
+                  <article class="debug-chip" data-explain-key="publicWinningMode">
+                    <span>公开中奖口径</span>
+                    <strong id="pointsChallengePublicWinningModeBadge">手动输入</strong>
+                  </article>
+                </div>
+
+                <div class="challenge-custom-shell">
+                  <div class="section-head">
+                    <h3>自定义计奖规则</h3>
+                    <p class="subtle">修改固定奖级金额或奖池比例后，需要按新规则重新开始本局挑战。</p>
+                  </div>
+
+                  <div class="challenge-custom-groups">
+                    <details class="challenge-custom-group" open>
+                      <summary data-explain-key="customFixedTierPoints">
+                        <span>固定奖级点数</span>
+                        <small>三至六等奖与特别规则</small>
+                      </summary>
+                      <div class="input-grid challenge-custom-grid">
+                        <label>
+                          三等奖点数
+                          <input
+                            id="pointsChallengeTier3Points"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value="3000"
+                            data-explain-key="customFixedTierPoints"
+                          />
+                        </label>
+                        <label>
+                          四等奖点数
+                          <input
+                            id="pointsChallengeTier4Points"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value="200"
+                            data-explain-key="customFixedTierPoints"
+                          />
+                        </label>
+                        <label>
+                          五等奖点数
+                          <input
+                            id="pointsChallengeTier5Points"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value="10"
+                            data-explain-key="customFixedTierPoints"
+                          />
+                        </label>
+                        <label>
+                          六等奖点数
+                          <input
+                            id="pointsChallengeTier6Points"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value="5"
+                            data-explain-key="customFixedTierPoints"
+                          />
+                        </label>
+                        <label>
+                          特别规则点数
+                          <input
+                            id="pointsChallengeFuYunPoints"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value="5"
+                            data-explain-key="customFixedTierPoints"
+                          />
+                        </label>
+                      </div>
+                    </details>
+
+                    <details class="challenge-custom-group" open>
+                      <summary data-explain-key="currentPrizePoolRatio">
+                        <span>基础计提比例</span>
+                        <small>奖池与调节基金</small>
+                      </summary>
+                      <div class="input-grid challenge-custom-grid challenge-custom-grid-compact">
+                        <label>
+                          当期奖池计提比例（%）
+                          <input
+                            id="pointsChallengeCurrentPrizePoolRatio"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value="49"
+                            data-explain-key="currentPrizePoolRatio"
+                          />
+                        </label>
+                        <label>
+                          调节基金计提比例（%）
+                          <input
+                            id="pointsChallengeRegulationFundRatio"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value="2"
+                            data-explain-key="regulationFundRatio"
+                          />
+                        </label>
+                      </div>
+                      <p id="pointsChallengeBaseRatioHint" class="challenge-ratio-hint"></p>
+                    </details>
+
+                    <details class="challenge-custom-group">
+                      <summary data-explain-key="specialPoolRatios">
+                        <span>特别规则奖池分配</span>
+                        <small>需合计 100%</small>
+                      </summary>
+                      <div class="input-grid challenge-custom-grid challenge-custom-grid-compact">
+                        <label>
+                          特别规则一等奖追加比例（%）
+                          <input
+                            id="pointsChallengeSpecialTier1Part2Ratio"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value="20"
+                            data-explain-key="specialPoolRatios"
+                          />
+                        </label>
+                        <label>
+                          特别规则二等奖比例（%）
+                          <input
+                            id="pointsChallengeSpecialTier2Ratio"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value="80"
+                            data-explain-key="specialPoolRatios"
+                          />
+                        </label>
+                      </div>
+                      <p id="pointsChallengeSpecialPoolRatioHint" class="challenge-ratio-hint"></p>
+                    </details>
+
+                    <details class="challenge-custom-group">
+                      <summary data-explain-key="lowPoolRatios">
+                        <span>常规低奖池分配</span>
+                        <small>需合计 100%</small>
+                      </summary>
+                      <div class="input-grid challenge-custom-grid challenge-custom-grid-compact">
+                        <label>
+                          常规低奖池一等奖比例（%）
+                          <input
+                            id="pointsChallengeLowPoolTier1Ratio"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value="75"
+                            data-explain-key="lowPoolRatios"
+                          />
+                        </label>
+                        <label>
+                          常规低奖池二等奖比例（%）
+                          <input
+                            id="pointsChallengeLowPoolTier2Ratio"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value="25"
+                            data-explain-key="lowPoolRatios"
+                          />
+                        </label>
+                      </div>
+                      <p id="pointsChallengeLowPoolRatioHint" class="challenge-ratio-hint"></p>
+                    </details>
+
+                    <details class="challenge-custom-group">
+                      <summary data-explain-key="highPoolRatios">
+                        <span>常规高奖池分配</span>
+                        <small>需合计 100%</small>
+                      </summary>
+                      <div class="input-grid challenge-custom-grid challenge-custom-grid-compact">
+                        <label>
+                          常规高奖池一等奖基础比例（%）
+                          <input
+                            id="pointsChallengeHighPoolTier1Part1Ratio"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value="55"
+                            data-explain-key="highPoolRatios"
+                          />
+                        </label>
+                        <label>
+                          常规高奖池一等奖追加比例（%）
+                          <input
+                            id="pointsChallengeHighPoolTier1Part2Ratio"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value="20"
+                            data-explain-key="highPoolRatios"
+                          />
+                        </label>
+                        <label>
+                          常规高奖池二等奖比例（%）
+                          <input
+                            id="pointsChallengeHighPoolTier2Ratio"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value="25"
+                            data-explain-key="highPoolRatios"
+                          />
+                        </label>
+                      </div>
+                      <p id="pointsChallengeHighPoolRatioHint" class="challenge-ratio-hint"></p>
+                    </details>
+                  </div>
+
+                  <div class="challenge-inline-actions challenge-inline-actions-custom">
+                    <button
+                      id="applyPointsChallengeCustomRules"
+                      type="button"
+                      class="ghost"
+                      data-explain-key="applyCustomRules"
+                    >
+                      应用自定义并重新开始
+                    </button>
+                    <button
+                      id="resetPointsChallengeCustomRules"
+                      type="button"
+                      class="ghost"
+                      data-explain-key="restoreCustomRules"
+                    >
+                      恢复默认并重新开始
+                    </button>
+                  </div>
+                  <p id="pointsChallengeCustomRulesHint" class="subtle challenge-custom-note">
+                    当前使用默认计奖规则。应用后会清空本局点数、回补次数和挑战记录。
+                  </p>
+                </div>
+              </div>
+
+              <div class="challenge-workspace">
+                <div class="challenge-left-column">
+                  <div class="input-grid challenge-candidate-grid">
+                    <label>
+                      候选红球（1-33，至少 6 个）
+                      <input
+                        id="pointsChallengeRedCandidates"
+                        type="text"
+                        placeholder="例如：1,2,3,4,5,6,7,8"
+                        data-explain-key="redCandidates"
+                      />
+                    </label>
+                    <label>
+                      候选蓝球（1-16，至少 1 个）
+                      <input
+                        id="pointsChallengeBlueCandidates"
+                        type="text"
+                        placeholder="例如：1,3,5"
+                        data-explain-key="blueCandidates"
+                      />
+                    </label>
+                  </div>
+
+                  <p id="pointsChallengeSelectionSummary" class="subtle">已选红球 0 个，已选蓝球 0 个</p>
+
+                  <div class="board-block">
+                    <div class="board-header">
+                      <h3>红球候选号池</h3>
+                      <span class="subtle">当前 MVP 先支持复式选号</span>
+                    </div>
+                    <div id="pointsChallengeRedBoard" class="ball-board ball-board-red"></div>
+                  </div>
+
+                  <div class="board-block">
+                    <div class="board-header">
+                      <h3>蓝球候选号池</h3>
+                      <span class="subtle">输入框与球盘保持同步</span>
+                    </div>
+                    <div id="pointsChallengeBlueBoard" class="ball-board ball-board-blue"></div>
+                  </div>
+
+                  <div class="challenge-action-row">
+                    <button id="runPointsChallengeRound" type="button" data-explain-key="runChallenge">
+                      运行一轮挑战
+                    </button>
+                    <button
+                      id="resetPointsChallengeSession"
+                      type="button"
+                      class="ghost"
+                      data-explain-key="resetSession"
+                    >
+                      重置本局
+                    </button>
+                    <button
+                      id="clearPointsChallengeHistory"
+                      type="button"
+                      class="ghost"
+                      data-explain-key="clearHistory"
+                    >
+                      清空记录
+                    </button>
+                  </div>
+                  <p id="pointsChallengeError" class="error" aria-live="polite"></p>
+                </div>
+
+                <div class="challenge-right-column">
+                  <div class="summary-grid points-summary-grid">
+                    <article class="metric-card points-summary-card" data-explain-key="currentPoints">
+                      <p class="metric-label">当前点数</p>
+                      <div id="pointsChallengeCurrentPoints" class="metric-value">1,000 点</div>
+                    </article>
+
+                    <article class="metric-card points-summary-card" data-explain-key="theoreticalLines">
+                      <p class="metric-label">理论注数</p>
+                      <div id="pointsChallengeTheoreticalLines" class="metric-value">请先输入候选号</div>
+                    </article>
+
+                    <article class="metric-card points-summary-card" data-explain-key="effectiveLines">
+                      <p class="metric-label">计奖注数</p>
+                      <div id="pointsChallengeEffectiveLines" class="metric-value">请先输入候选号</div>
+                    </article>
+
+                    <article class="metric-card points-summary-card" data-explain-key="costEstimate">
+                      <p class="metric-label">预计消耗</p>
+                      <div id="pointsChallengeCostEstimate" class="metric-value">—</div>
+                    </article>
+
+                    <article class="metric-card" data-explain-key="refillCount">
+                      <p class="metric-label">已用回补次数</p>
+                      <div id="pointsChallengeRefillCount" class="metric-value">0 / 3 次</div>
+                    </article>
+
+                    <article class="metric-card" data-explain-key="returnPoints">
+                      <p class="metric-label">本轮返回点数</p>
+                      <div id="pointsChallengeReturnPoints" class="metric-value">尚未开始</div>
+                    </article>
+
+                    <article class="metric-card" data-explain-key="bestTier">
+                      <p class="metric-label">最高奖级</p>
+                      <div id="pointsChallengeBestTier" class="metric-value">尚未开始</div>
+                    </article>
+
+                    <article class="metric-card" data-explain-key="tierCounts">
+                      <p class="metric-label">各奖级中奖注数</p>
+                      <div id="pointsChallengeTierCounts" class="metric-value">尚未开始</div>
+                    </article>
+
+                    <article class="metric-card" data-explain-key="highTierValues">
+                      <p class="metric-label">一二等奖单注点数</p>
+                      <div id="pointsChallengeHighTierValues" class="metric-value">尚未开始</div>
+                    </article>
+
+                    <article class="metric-card" data-explain-key="carryPoolChange">
+                      <p class="metric-label">奖池变化</p>
+                      <div id="pointsChallengeCarryPoolChange" class="metric-value">尚未开始</div>
+                    </article>
+                  </div>
+
+                  <article class="metric-card challenge-summary-card" data-explain-key="roundSummary">
+                    <p class="metric-label">本轮摘要</p>
+                    <div id="pointsChallengeRoundSummary" class="metric-value">尚未开始虚拟点数挑战。</div>
+                  </article>
+
+                  <article class="challenge-note-card">
+                    <div class="challenge-note-head">
+                      <div>
+                        <p class="metric-label">注释栏</p>
+                        <h3 id="pointsChallengeInspectorTitle">字段说明</h3>
+                      </div>
+                      <span id="pointsChallengeInspectorLabel" class="subtle">当前未选中字段</span>
+                    </div>
+                    <p id="pointsChallengeInspectorBody" class="challenge-note-body">
+                      将光标放到参数输入框、摘要卡片或操作按钮上，这里会显示对应说明，帮助理解当前字段在规则映射中的作用。
+                    </p>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-head">
+              <h2>规则映射表</h2>
+              <p class="subtle">下面的点值只用于规则映射演示，显示单位统一为点。</p>
+            </div>
+            <div class="rule-table">
+              <div class="rule-row"><strong>一等奖</strong><span>6 红 + 1 蓝，按场景浮动计算</span></div>
+              <div class="rule-row"><strong>二等奖</strong><span>6 红，按场景浮动计算</span></div>
+              <div class="rule-row"><strong>三等奖</strong><span>5 红 + 1 蓝，<span id="pointsChallengeRuleTier3">3000 点</span></span></div>
+              <div class="rule-row"><strong>四等奖</strong><span>5 红 或 4 红 + 1 蓝，<span id="pointsChallengeRuleTier4">200 点</span></span></div>
+              <div class="rule-row"><strong>五等奖</strong><span>4 红 或 3 红 + 1 蓝，<span id="pointsChallengeRuleTier5">10 点</span></span></div>
+              <div class="rule-row"><strong>六等奖</strong><span>中蓝球且红球中 0-2 个，<span id="pointsChallengeRuleTier6">5 点</span></span></div>
+              <div class="rule-row"><strong>特别规则</strong><span>特别规则开启时，3 红且蓝球未中，<span id="pointsChallengeRuleFuYun">5 点</span></span></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-head">
+              <h2>长期结果</h2>
+              <p class="subtle">点数曲线用于观察随机实验的长期波动，单轮结果不具备预测含义。</p>
+            </div>
+            <div class="challenge-results-grid">
+              <article class="challenge-result-card">
+                <h3>点数曲线</h3>
+                <div id="pointsChallengeChart" class="challenge-chart-wrap"></div>
+              </article>
+              <article class="challenge-result-card">
+                <h3>级别分布</h3>
+                <div id="pointsChallengeDistribution" class="challenge-distribution"></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-head">
+              <h2>最近 50 轮</h2>
+              <p class="subtle">本地只保留最近 50 轮摘要，不保存任何真实身份、支付或账号信息。</p>
+            </div>
+            <div id="pointsChallengeRoundsList" class="challenge-rounds-list"></div>
+          </section>
+
+          <div class="challenge-mobile-bar">
+            <button id="runPointsChallengeRoundMobile" type="button">运行一轮挑战</button>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

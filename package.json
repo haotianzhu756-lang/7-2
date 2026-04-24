@@ -1,0 +1,12 @@
+﻿{
+  "name": "gomoku-classic",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "build:pages": "node scripts/build-pages.js",
+    "test": "node tests/gomoku.test.js && node tests/ssq.test.js && node tests/ssq.realistic-points-challenge.test.js",
+    "fetch:ssq": "node scripts/fetch-ssq-history.js"
+  }
+}
