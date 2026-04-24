@@ -309,6 +309,7 @@ thead th {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  grid-auto-flow: dense;
 }
 
 .challenge-layout {
@@ -485,6 +486,10 @@ thead th {
 
 .metric-card-wide {
   grid-column: 1 / -1;
+}
+
+.metric-card-mobile-wide {
+  min-width: 0;
 }
 
 .metric-card-band[data-band="full"] {
@@ -945,9 +950,13 @@ thead th {
 
   .filter-grid,
   .input-grid,
-  .summary-grid,
   .round-history-list {
     grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .mode-tabs {
@@ -963,12 +972,84 @@ thead th {
   .challenge-custom-grid,
   .challenge-candidate-grid,
   .challenge-debug-strip {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .metric-card {
+    min-height: 96px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .metric-card-mobile-wide {
+    grid-column: 1 / -1;
+  }
+
+  .metric-label {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .metric-value {
+    margin-top: 6px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .points-summary-card {
+    min-height: 92px;
+  }
+
+  .challenge-summary-card {
+    min-height: 120px;
+  }
+
+  .challenge-note-card {
+    padding: 14px;
+    gap: 10px;
+    min-height: 0;
   }
 
   .challenge-custom-group > summary {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .challenge-custom-group > summary span {
+    font-size: 14px;
+  }
+
+  .challenge-custom-group > summary small {
+    font-size: 11px;
+  }
+
+  .challenge-ratio-hint {
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .challenge-custom-group > .challenge-custom-grid,
+  .challenge-custom-group > .challenge-ratio-hint {
+    margin: 0 12px 12px;
+  }
+
+  .debug-chip {
+    min-height: 72px;
+    padding: 10px 12px;
+  }
+
+  .debug-chip strong {
+    font-size: 15px;
+  }
+
+  .challenge-result-card {
+    padding: 12px;
+  }
+
+  .challenge-result-card h3 {
+    margin-bottom: 8px;
   }
 
   .challenge-inline-actions-custom {
@@ -1031,6 +1112,40 @@ thead th {
     width: 100%;
   }
 
+  .summary-grid,
+  .challenge-debug-grid,
+  .challenge-custom-grid,
+  .challenge-candidate-grid,
+  .challenge-debug-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .metric-card {
+    min-height: 84px;
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .points-summary-card {
+    min-height: 84px;
+  }
+
+  .metric-value {
+    font-size: 14px;
+  }
+
+  .metric-value-seed,
+  .seed-inline {
+    font-size: 12px;
+  }
+
+  .challenge-inline-actions-custom,
+  .challenge-mobile-bar {
+    padding: 8px;
+    border-radius: 14px;
+  }
+
   .ball-board-red {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
@@ -1060,6 +1175,16 @@ thead th {
   }
 
   .challenge-distribution-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 380px) {
+  .summary-grid,
+  .challenge-debug-grid,
+  .challenge-custom-grid,
+  .challenge-candidate-grid,
+  .challenge-debug-strip {
     grid-template-columns: 1fr;
   }
 }
