@@ -45,6 +45,11 @@ dist/
 3. 在 `Build and deployment` 里把 `Source` 设为 `GitHub Actions`。
 4. 推送到 `main` 或 `master` 分支后，等待 `Deploy GitHub Pages` 工作流完成。
 
+如果工作流里出现 `Get Pages site failed`：
+
+1. 先确认仓库 `Settings` -> `Pages` 里已经把 `Source` 设为 `GitHub Actions`。
+2. 如果仓库是私有仓库，GitHub Free 不能直接发布私有仓库 Pages，需要把仓库改成公开仓库，或者使用支持私有仓库 Pages 的付费计划。
+
 发布成功后，手机直接打开：
 
 ```text
